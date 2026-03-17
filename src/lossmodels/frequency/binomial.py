@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.stats import binom
+
 from .base import FrequencyModel
 
 
@@ -36,7 +38,6 @@ class Binomial(FrequencyModel):
         """
         Probability mass function P(N = k)
         """
-        from scipy.stats import binom
         return binom.pmf(k, self.n, self.p)
 
     def __repr__(self):
