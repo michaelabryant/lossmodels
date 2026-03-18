@@ -33,7 +33,7 @@ class Geometric(FrequencyModel):
         return np.random.geometric(self.p, size=size) - 1
 
     def mean(self) -> float:
-        return 1 / self.p
+        return (1 - self.p) / self.p
 
     def variance(self) -> float:
         return (1 - self.p) / (self.p ** 2)

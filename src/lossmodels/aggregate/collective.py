@@ -1,8 +1,8 @@
 import numpy as np
 
 from .base import AggregateModel
-from lossmodels.frequency.base import FrequencyModel
-from lossmodels.severity.base import SeverityModel
+from ..frequency.base import FrequencyModel
+from ..severity.base import SeverityModel
 
 
 class CollectiveRiskModel(AggregateModel):
