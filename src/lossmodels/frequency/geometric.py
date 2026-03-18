@@ -24,8 +24,8 @@ class Geometric(FrequencyModel):
     """
 
     def __init__(self, p: float):
-        if not (0 <= p <= 1):
-            raise ValueError("p must be between 0 and 1")
+        if not (0 < p <= 1):
+            raise ValueError("p must be in (0, 1].")
 
         self.p = p
 
