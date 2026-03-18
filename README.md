@@ -68,12 +68,16 @@ pytest -v
 
 ---
 
-## Roadmap
+## Future Work
 
-- Empirical distributions  
-- Parameter estimation  
-- Model selection tools  
-- Advanced aggregate methods  
+Planned improvements include:
+
+- Empirical severity and frequency models  
+- Parameter estimation (MLE, method of moments)  
+- Model selection tools (AIC, BIC)  
+- Faster aggregate methods (Panjer recursion, FFT)  
+- Additional risk metrics  
+- Visualization tools  
 
 ---
 
