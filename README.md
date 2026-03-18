@@ -2,23 +2,81 @@
 
 A Python library for actuarial loss modeling using frequency–severity methods.
 
+---
+
 ## Overview
 
-`lossmodels` implements core actuarial concepts:
+`lossmodels` provides a modular framework for modeling aggregate insurance losses using classical actuarial techniques.
 
-- Frequency distributions (Poisson, Binomial, Geometric, Negative Binomial)
-- Severity distributions (Exponential, Gamma, Lognormal, Pareto, Weibull)
-- Aggregate loss models (collective risk model)
+It includes:
+
+- Frequency distributions (claim counts)
+- Severity distributions (loss sizes)
+- Aggregate models (compound distributions)
 - Coverage modifications (deductibles, limits, layers)
-- Risk measures (VaR, TVaR, stop-loss, limited expected value)
-
-The goal is to provide a clean, modular framework for simulating and analyzing aggregate insurance losses.
+- Risk measures (VaR, TVaR, stop-loss, LEV)
 
 ---
 
 ## Installation
 
-From the project root:
-
 ```bash
 pip install -e .
+```
+
+---
+
+## Quick Start
+
+```python
+from lossmodels.frequency import Poisson
+from lossmodels.severity import Lognormal
+from lossmodels.coverage import Layer
+from lossmodels.aggregate import CollectiveRiskModel
+
+freq = Poisson(lam=2.0)
+sev = Lognormal(mu=10.0, sigma=0.8)
+
+layer = Layer(sev, d=10000, u=40000)
+
+model = CollectiveRiskModel(freq, layer)
+
+print("Mean:", model.mean())
+print("VaR (95%):", model.var(0.95))
+print("TVaR (95%):", model.tvar(0.95))
+```
+
+---
+
+## Features
+
+- Frequency models: Poisson, Binomial, Geometric, Negative Binomial  
+- Severity models: Exponential, Gamma, Lognormal, Pareto, Weibull  
+- Coverage: Deductible, Policy Limit, Layer  
+- Aggregate modeling with simulation  
+- Risk measures: VaR, TVaR, stop-loss, LEV  
+
+---
+
+## Development
+
+Run tests:
+
+```bash
+pytest -v
+```
+
+---
+
+## Roadmap
+
+- Empirical distributions  
+- Parameter estimation  
+- Model selection tools  
+- Advanced aggregate methods  
+
+---
+
+## License
+
+MIT License
