@@ -1,51 +1,77 @@
 import numpy as np
-from abc import ABC, abstractmethod
+from scipy.stats import expon
+
+from .base import SeverityModel
 
 
-class SeverityModel(ABC):
+class Exponential(SeverityModel):
     """
-    Base class for severity (loss size) distributions.
+    Exponential severity model.
 
-    All severity models must implement:
-    - sample
-    - mean
-    - variance
+    Parameterization
+    ----------------
+    X ~ Exponential(rate)
+
+    Support: x >= 0
+
+    Mean = 1 / rate
+    Variance = 1 / rate^2
+
+    Parameters
+    ----------
+    rate : float
+        Rate parameter (lambda), with rate > 0.
     """
 
-    @abstractmethod
+    def __init__(self, rate: float):
+        if rate <= 0:
+            raise ValueError("rate must be positive.")
+
+        self.rate = rate
+        self.scale = 1.0 / rate  # SciPy uses scale = 1 / rate
+
     def sample(self, size: int = 1) -> np.ndarray:
-        """Generate random loss samples"""
-        pass
+        """
+        Generate random samples.
+        """
+        if size <= 0:
+            raise ValueError("size must be positive.")
 
-    @abstractmethod
+        return np.random.exponential(scale=self.scale, size=size)
+
     def mean(self) -> float:
-        """Expected loss"""
-        pass
+        return 1.0 / self.rate
 
-    @abstractmethod
     def variance(self) -> float:
-        """Variance of loss"""
-        pass
+        return 1.0 / (self.rate ** 2)
 
-    def std(self) -> float:
-        return np.sqrt(self.variance())
+    def pdf(self, x: float) -> float:
+        if x < 0:
+            return 0.0
+        return float(expon.pdf(x, scale=self.scale))
 
-    # --- Actuarial-specific methods ---
+    def cdf(self, x: float) -> float:
+        if x < 0:
+            return 0.0
+        return float(expon.cdf(x, scale=self.scale))
 
-    def limited_expected_value(self, d: float, n_sim: int = 100_000) -> float:
+    def excess_loss(self, d: float) -> float:
         """
-        E[min(X, d)] using simulation (default implementation).
-        Subclasses should override with closed-form when available.
+        E[(X - d)+] = exp(-rate * d) / rate
         """
-        samples = self.sample(n_sim)
-        return np.mean(np.minimum(samples, d))
+        if d < 0:
+            raise ValueError("d must be nonnegative.")
 
-    def excess_loss(self, d: float, n_sim: int = 100_000) -> float:
-        """
-        E[(X - d)+] using simulation.
-        """
-        samples = self.sample(n_sim)
-        return np.mean(np.maximum(samples - d, 0))
+        return float(np.exp(-self.rate * d) / self.rate)
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}()"
+    def limited_expected_value(self, d: float) -> float:
+        """
+        E[min(X, d)] = (1 - exp(-rate * d)) / rate
+        """
+        if d < 0:
+            raise ValueError("d must be nonnegative.")
+
+        return float((1.0 - np.exp(-self.rate * d)) / self.rate)
+
+    def __repr__(self) -> str:
+        return f"Exponential(rate={self.rate})"
