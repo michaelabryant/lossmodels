@@ -12,9 +12,18 @@ It includes:
 
 - Frequency distributions (claim counts)
 - Severity distributions (loss sizes)
+- Empirical (data-driven) models
 - Aggregate models (compound distributions)
 - Coverage modifications (deductibles, limits, layers)
+- Parameter estimation (MLE)
+- Model diagnostics (log-likelihood, AIC, BIC)
 - Risk measures (VaR, TVaR, stop-loss, LEV)
+
+The library is designed to be:
+
+- mathematically transparent  
+- easy to extend  
+- consistent with actuarial theory  
 
 ---
 
@@ -48,13 +57,94 @@ print("TVaR (95%):", model.tvar(0.95))
 
 ---
 
-## Features
+## Empirical Models
 
-- Frequency models: Poisson, Binomial, Geometric, Negative Binomial  
-- Severity models: Exponential, Gamma, Lognormal, Pareto, Weibull  
-- Coverage: Deductible, Policy Limit, Layer  
-- Aggregate modeling with simulation  
-- Risk measures: VaR, TVaR, stop-loss, LEV  
+Use real data directly without assuming a distribution:
+
+```python
+from lossmodels.empirical import EmpiricalSeverity, EmpiricalFrequency
+
+sev = EmpiricalSeverity([1000, 2000, 5000, 10000])
+freq = EmpiricalFrequency([0, 1, 2, 1, 0])
+
+print(sev.mean())
+print(freq.mean())
+```
+
+---
+
+## Parameter Estimation
+
+Fit parametric models to data:
+
+```python
+from lossmodels.estimation import fit_lognormal, fit_poisson
+
+sev_model = fit_lognormal(severity_data)
+freq_model = fit_poisson(frequency_data)
+```
+
+Supports:
+- closed-form MLE (Exponential, Lognormal, Poisson)
+- SciPy-based MLE (Gamma, Weibull)
+- generic numerical MLE (`fit_mle`)
+
+---
+
+## Model Diagnostics
+
+Compare model fits:
+
+```python
+from lossmodels.estimation import log_likelihood, aic, bic
+
+ll = log_likelihood(sev_model, severity_data)
+aic_val = aic(sev_model, severity_data, k=2)
+bic_val = bic(sev_model, severity_data, k=2)
+```
+
+---
+
+## Aggregate Modeling
+
+```python
+from lossmodels.aggregate import CollectiveRiskModel
+
+model = CollectiveRiskModel(freq_model, sev_model)
+
+print(model.mean())
+print(model.var(0.95))
+print(model.tvar(0.95))
+```
+
+---
+
+## Coverage Modifications
+
+```python
+from lossmodels.coverage import OrdinaryDeductible, PolicyLimit, Layer
+
+ded = OrdinaryDeductible(sev_model, d=10000)
+lim = PolicyLimit(sev_model, u=50000)
+layer = Layer(sev_model, d=10000, u=40000)
+```
+
+---
+
+## Project Structure
+
+```
+lossmodels/
+├─ src/lossmodels/
+│  ├─ frequency/
+│  ├─ severity/
+│  ├─ empirical/
+│  ├─ aggregate/
+│  ├─ coverage/
+│  └─ estimation/
+├─ tests/
+├─ examples/
+```
 
 ---
 
@@ -70,14 +160,21 @@ pytest -v
 
 ## Future Work
 
-Planned improvements include:
+- Method of moments estimation
+- Additional distributions
+- Faster aggregate methods (Panjer recursion, FFT)
+- Visualization tools
+- Bootstrap / uncertainty estimation
 
-- Empirical severity and frequency models  
-- Parameter estimation (MLE, method of moments)  
-- Model selection tools (AIC, BIC)  
-- Faster aggregate methods (Panjer recursion, FFT)  
-- Additional risk metrics  
-- Visualization tools  
+---
+
+## Intended Audience
+
+- Actuarial students (SOA / CAS)
+- Practicing actuaries
+- Quantitative developers
+- Data scientists working with risk models
+- Researchers in stochastic modeling
 
 ---
 
