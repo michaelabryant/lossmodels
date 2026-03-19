@@ -8,27 +8,27 @@ A Python library for actuarial loss modeling using frequency–severity methods.
 
 `lossmodels` provides a modular framework for modeling aggregate insurance losses using classical actuarial techniques.
 
-It includes:
+Current functionality includes:
 
-- Frequency distributions (claim counts)
-- Severity distributions (loss sizes)
-- Empirical (data-driven) models
-- Aggregate models (compound distributions)
-- Coverage modifications (deductibles, limits, layers)
+- Frequency distributions
+- Severity distributions
+- Empirical models
+- Coverage modifications
+- Aggregate simulation
+- Panjer recursion
+- FFT-based aggregate approximation
 - Parameter estimation (MLE and Method of Moments)
 - Model diagnostics (log-likelihood, AIC, BIC)
 - Credibility models (Bühlmann, Bühlmann–Straub)
 - Risk measures (VaR, TVaR, stop-loss, LEV)
 
-The library is designed to be:
-
-- mathematically transparent  
-- easy to extend  
-- consistent with actuarial theory  
+This project is still under active development and is intended to eventually cover the major topics from *Loss Models* before publication to PyPI.
 
 ---
 
 ## Installation
+
+From the project root:
 
 ```bash
 pip install -e .
@@ -48,16 +48,62 @@ sev = Lognormal(mu=10.0, sigma=0.8)
 
 model = CollectiveRiskModel(freq, sev)
 
-print("Mean:", model.mean())
-print("VaR (95%):", model.var(0.95))
-print("TVaR (95%):", model.tvar(0.95))
+print(model.mean())
+print(model.var(0.95))
+print(model.tvar(0.95))
+```
+
+---
+
+## Aggregate Methods
+
+### Simulation
+
+```python
+from lossmodels.frequency import Poisson
+from lossmodels.severity import Exponential
+from lossmodels.aggregate import CollectiveRiskModel
+
+freq = Poisson(lam=2.0)
+sev = Exponential(rate=1.0)
+
+model = CollectiveRiskModel(freq, sev)
+samples = model.sample(100000)
+```
+
+### Panjer recursion
+
+```python
+from lossmodels.aggregate import discretize_severity, panjer_recursion
+from lossmodels.frequency import Poisson
+from lossmodels.severity import Exponential
+
+freq = Poisson(lam=2.0)
+sev = Exponential(rate=1.0)
+
+h = 0.01
+severity_pmf = discretize_severity(sev, h=h, max_loss=20.0)
+aggregate_pmf = panjer_recursion(freq, severity_pmf, n_steps=5000)
+```
+
+### FFT
+
+```python
+from lossmodels.aggregate import discretize_severity, fft_aggregate_poisson
+from lossmodels.frequency import Poisson
+from lossmodels.severity import Exponential
+
+freq = Poisson(lam=2.0)
+sev = Exponential(rate=1.0)
+
+h = 0.01
+severity_pmf = discretize_severity(sev, h=h, max_loss=20.0)
+aggregate_pmf = fft_aggregate_poisson(freq, severity_pmf, n_steps=5000)
 ```
 
 ---
 
 ## Empirical Models
-
-Use real data directly:
 
 ```python
 from lossmodels.empirical import EmpiricalSeverity, EmpiricalFrequency
@@ -70,34 +116,58 @@ freq = EmpiricalFrequency([0, 1, 2, 1, 0])
 
 ## Parameter Estimation
 
+### Maximum likelihood
+
 ```python
-from lossmodels.estimation import (
-    fit_lognormal,
-    fit_poisson,
-    fit_lognormal_moments,
-)
+from lossmodels.estimation import fit_lognormal, fit_poisson
 
 sev_model = fit_lognormal(severity_data)
 freq_model = fit_poisson(frequency_data)
-
-sev_model_mom = fit_lognormal_moments(severity_data)
 ```
 
----
-
-## Model Diagnostics
+### Method of moments
 
 ```python
-from lossmodels.estimation import log_likelihood, aic, bic
+from lossmodels.estimation import fit_lognormal_moments
 
-ll = log_likelihood(sev_model, severity_data)
-aic_val = aic(sev_model, severity_data, k=2)
-bic_val = bic(sev_model, severity_data, k=2)
+sev_model = fit_lognormal_moments(severity_data)
+```
+
+### Generic numerical MLE
+
+```python
+from lossmodels.estimation import fit_mle
+from lossmodels.severity import Lognormal
+
+model = fit_mle(
+    Lognormal,
+    severity_data,
+    initial_params=[8.0, 1.0],
+    bounds=[(None, None), (1e-8, None)],
+)
 ```
 
 ---
 
-## Credibility Models
+## Model Diagnostics and Selection
+
+```python
+from lossmodels.estimation import log_likelihood, aic, bic, fit_best_severity
+
+result = fit_best_severity(
+    severity_data,
+    candidates=["exponential", "gamma", "lognormal", "weibull"],
+    method="mle",
+    criterion="aic",
+)
+
+print(result["best_name"])
+print(result["best_model"])
+```
+
+---
+
+## Credibility
 
 ### Bühlmann
 
@@ -111,9 +181,8 @@ data = [
 ]
 
 model = Buhlmann.fit(data)
-
-print("Z:", model.z)
-print("Premium:", model.premium(12.0))
+print(model.z)
+print(model.premium(12.0))
 ```
 
 ### Bühlmann–Straub
@@ -134,11 +203,6 @@ weights = [
 ]
 
 model = BuhlmannStraub.fit(data, weights)
-
-risk_means = [12, 9, 16]
-risk_weights = [4, 4, 4]
-
-print("Premiums:", model.premium(risk_means, risk_weights))
 ```
 
 ---
@@ -155,27 +219,24 @@ layer = Layer(sev, d=10000, u=40000)
 
 ---
 
-## Project Structure
+## Examples
 
-```
-lossmodels/
-├─ src/lossmodels/
-│  ├─ frequency/
-│  ├─ severity/
-│  ├─ empirical/
-│  ├─ aggregate/
-│  ├─ coverage/
-│  ├─ estimation/
-│  └─ credibility/
-├─ tests/
-├─ examples/
-```
+Current example scripts include:
+
+- `basic_collective_model.py`
+- `fit_and_simulate.py`
+- `panjer_vs_simulation.py`
+- `panjer_vs_fft_vs_simulation.py`
+- `deductible_example.py`
+- `limit_example.py`
+- `layer_example.py`
+- `stop_loss_example.py`
 
 ---
 
 ## Development
 
-Run tests:
+Run the test suite with:
 
 ```bash
 pytest -v
@@ -183,22 +244,21 @@ pytest -v
 
 ---
 
-## Future Work
+## Project Status
 
-- Panjer recursion
-- FFT-based aggregate models
-- Bootstrap / uncertainty estimation
-- Additional distributions
-- Visualization tools
+This package is still under development. The goal is to implement the major topics from *Loss Models* before publishing to PyPI.
 
 ---
 
-## Intended Audience
+## Future Work
 
-- Actuarial students (SOA / CAS)
-- Practicing actuaries
-- Quantitative developers
-- Data scientists working with risk models
+Planned improvements include:
+
+- additional aggregate methods and refinements
+- improved discretization schemes
+- bootstrap / uncertainty estimation
+- additional distributions and actuarial utilities
+- expanded documentation and examples
 
 ---
 
