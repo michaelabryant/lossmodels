@@ -15,8 +15,9 @@ It includes:
 - Empirical (data-driven) models
 - Aggregate models (compound distributions)
 - Coverage modifications (deductibles, limits, layers)
-- Parameter estimation (MLE)
+- Parameter estimation (MLE and Method of Moments)
 - Model diagnostics (log-likelihood, AIC, BIC)
+- Credibility models (Bühlmann, Bühlmann–Straub)
 - Risk measures (VaR, TVaR, stop-loss, LEV)
 
 The library is designed to be:
@@ -40,15 +41,12 @@ pip install -e .
 ```python
 from lossmodels.frequency import Poisson
 from lossmodels.severity import Lognormal
-from lossmodels.coverage import Layer
 from lossmodels.aggregate import CollectiveRiskModel
 
 freq = Poisson(lam=2.0)
 sev = Lognormal(mu=10.0, sigma=0.8)
 
-layer = Layer(sev, d=10000, u=40000)
-
-model = CollectiveRiskModel(freq, layer)
+model = CollectiveRiskModel(freq, sev)
 
 print("Mean:", model.mean())
 print("VaR (95%):", model.var(0.95))
@@ -59,41 +57,35 @@ print("TVaR (95%):", model.tvar(0.95))
 
 ## Empirical Models
 
-Use real data directly without assuming a distribution:
+Use real data directly:
 
 ```python
 from lossmodels.empirical import EmpiricalSeverity, EmpiricalFrequency
 
 sev = EmpiricalSeverity([1000, 2000, 5000, 10000])
 freq = EmpiricalFrequency([0, 1, 2, 1, 0])
-
-print(sev.mean())
-print(freq.mean())
 ```
 
 ---
 
 ## Parameter Estimation
 
-Fit parametric models to data:
-
 ```python
-from lossmodels.estimation import fit_lognormal, fit_poisson
+from lossmodels.estimation import (
+    fit_lognormal,
+    fit_poisson,
+    fit_lognormal_moments,
+)
 
 sev_model = fit_lognormal(severity_data)
 freq_model = fit_poisson(frequency_data)
-```
 
-Supports:
-- closed-form MLE (Exponential, Lognormal, Poisson)
-- SciPy-based MLE (Gamma, Weibull)
-- generic numerical MLE (`fit_mle`)
+sev_model_mom = fit_lognormal_moments(severity_data)
+```
 
 ---
 
 ## Model Diagnostics
-
-Compare model fits:
 
 ```python
 from lossmodels.estimation import log_likelihood, aic, bic
@@ -105,16 +97,48 @@ bic_val = bic(sev_model, severity_data, k=2)
 
 ---
 
-## Aggregate Modeling
+## Credibility Models
+
+### Bühlmann
 
 ```python
-from lossmodels.aggregate import CollectiveRiskModel
+from lossmodels.credibility import Buhlmann
 
-model = CollectiveRiskModel(freq_model, sev_model)
+data = [
+    [10, 12, 14],
+    [8, 9, 10],
+    [15, 16, 17],
+]
 
-print(model.mean())
-print(model.var(0.95))
-print(model.tvar(0.95))
+model = Buhlmann.fit(data)
+
+print("Z:", model.z)
+print("Premium:", model.premium(12.0))
+```
+
+### Bühlmann–Straub
+
+```python
+from lossmodels.credibility import BuhlmannStraub
+
+data = [
+    [10, 12, 14],
+    [8, 9, 10],
+    [15, 16, 17],
+]
+
+weights = [
+    [1, 2, 1],
+    [1, 1, 2],
+    [2, 1, 1],
+]
+
+model = BuhlmannStraub.fit(data, weights)
+
+risk_means = [12, 9, 16]
+risk_weights = [4, 4, 4]
+
+print("Premiums:", model.premium(risk_means, risk_weights))
 ```
 
 ---
@@ -124,9 +148,9 @@ print(model.tvar(0.95))
 ```python
 from lossmodels.coverage import OrdinaryDeductible, PolicyLimit, Layer
 
-ded = OrdinaryDeductible(sev_model, d=10000)
-lim = PolicyLimit(sev_model, u=50000)
-layer = Layer(sev_model, d=10000, u=40000)
+ded = OrdinaryDeductible(sev, d=10000)
+lim = PolicyLimit(sev, u=50000)
+layer = Layer(sev, d=10000, u=40000)
 ```
 
 ---
@@ -141,7 +165,8 @@ lossmodels/
 │  ├─ empirical/
 │  ├─ aggregate/
 │  ├─ coverage/
-│  └─ estimation/
+│  ├─ estimation/
+│  └─ credibility/
 ├─ tests/
 ├─ examples/
 ```
@@ -160,11 +185,11 @@ pytest -v
 
 ## Future Work
 
-- Method of moments estimation
-- Additional distributions
-- Faster aggregate methods (Panjer recursion, FFT)
-- Visualization tools
+- Panjer recursion
+- FFT-based aggregate models
 - Bootstrap / uncertainty estimation
+- Additional distributions
+- Visualization tools
 
 ---
 
@@ -174,7 +199,6 @@ pytest -v
 - Practicing actuaries
 - Quantitative developers
 - Data scientists working with risk models
-- Researchers in stochastic modeling
 
 ---
 
