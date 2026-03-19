@@ -15,6 +15,7 @@ from .moments import (
 )
 from .diagnostics import log_likelihood, aic, bic
 from .model_selection import fit_best_severity
+from .frequency_selection import fit_best_frequency
 
 __all__ = [
     "fit_exponential",
@@ -32,4 +33,5 @@ __all__ = [
     "aic",
     "bic",
     "fit_best_severity",
+    "fit_best_frequency",
 ]
