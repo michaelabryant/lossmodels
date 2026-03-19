@@ -6,6 +6,7 @@ from .mle import (
     fit_weibull,
     fit_mle,
 )
+from .diagnostics import log_likelihood, aic, bic
 
 __all__ = [
     "fit_exponential",
@@ -14,4 +15,7 @@ __all__ = [
     "fit_poisson",
     "fit_weibull",
     "fit_mle",
+    "log_likelihood",
+    "aic",
+    "bic",
 ]
