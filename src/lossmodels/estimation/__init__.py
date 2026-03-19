@@ -14,6 +14,7 @@ from .moments import (
     fit_weibull_moments,
 )
 from .diagnostics import log_likelihood, aic, bic
+from .model_selection import fit_best_severity
 
 __all__ = [
     "fit_exponential",
@@ -30,4 +31,5 @@ __all__ = [
     "log_likelihood",
     "aic",
     "bic",
+    "fit_best_severity",
 ]
