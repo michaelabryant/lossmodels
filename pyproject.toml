@@ -1,20 +1,52 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "lossmodels"
 version = "0.1.0"
-description = "A Python library for actuarial loss modeling."
+description = "A Python library for actuarial loss modeling using frequency–severity methods."
 readme = "README.md"
 requires-python = ">=3.10"
+license = { file = "LICENSE" }
 authors = [
     { name = "Michael Bryant" }
 ]
-dependencies = [
-    "numpy",
-    "scipy"
+keywords = [
+    "actuarial",
+    "insurance",
+    "risk",
+    "statistics",
+    "simulation",
+    "loss modeling",
+    "frequency severity"
 ]
+
+dependencies = [
+    "numpy>=1.22",
+    "scipy>=1.8"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/michaelabryant/lossmodels"
+Repository = "https://github.com/michaelabryant/lossmodels"
+Issues = "https://github.com/michaelabryant/lossmodels/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests"
+]
