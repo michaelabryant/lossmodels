@@ -11,6 +11,11 @@ from .panjer import (
     cdf_from_pmf,
     mean_from_aggregate_pmf,
 )
+from .fft import (
+    fft_aggregate_poisson,
+    cdf_from_pmf_fft,
+    mean_from_aggregate_pmf_fft,
+)
 
 __all__ = [
     "AggregateModel",
@@ -26,4 +31,7 @@ __all__ = [
     "panjer_recursion",
     "cdf_from_pmf",
     "mean_from_aggregate_pmf",
+    "fft_aggregate_poisson",
+    "cdf_from_pmf_fft",
+    "mean_from_aggregate_pmf_fft",
 ]
