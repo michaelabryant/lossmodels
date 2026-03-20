@@ -8,7 +8,9 @@ from ..severity import Exponential, Gamma, Lognormal, Weibull
 
 
 def _validate_positive_data(data, name: str = "data") -> np.ndarray:
-    """Validate that input data are nonempty and strictly positive."""
+    """
+    Validate that input data are nonempty and strictly positive.
+    """
     data = np.asarray(data, dtype=float)
     if data.size == 0:
         raise ValueError(f"{name} must not be empty.")
@@ -18,7 +20,9 @@ def _validate_positive_data(data, name: str = "data") -> np.ndarray:
 
 
 def _validate_count_data(data, name: str = "data") -> np.ndarray:
-    """Validate that input data are nonempty, nonnegative, and integer-valued."""
+    """
+    Validate that input data are nonempty, nonnegative, and integer-valued.
+    """
     data = np.asarray(data)
     if data.size == 0:
         raise ValueError(f"{name} must not be empty.")
@@ -37,7 +41,7 @@ def fit_exponential(data) -> Exponential:
         rate_hat = 1 / mean(data)
     """
     data = _validate_positive_data(data)
-    mean_x = np.mean(data)
+    mean_x = float(np.mean(data))
     if mean_x <= 0:
         raise ValueError("Mean of data must be positive.")
     rate_hat = 1.0 / mean_x
@@ -70,12 +74,12 @@ def fit_negbinomial(data) -> NegativeBinomial:
     Parameterization
     ----------------
     N = number of failures before the r-th success
-
     Support: {0, 1, 2, ...}
     Mean = r(1-p)/p
     Variance = r(1-p)/p^2
     """
     data = _validate_count_data(data)
+
     mean_x = float(np.mean(data))
     var_x = float(np.var(data, ddof=0))
 
@@ -87,8 +91,8 @@ def fit_negbinomial(data) -> NegativeBinomial:
         initial = np.array([1.0, 0.5], dtype=float)
 
     bounds = [
-        (1e-8, None),
-        (1e-8, 1.0 - 1e-8),
+        (1e-8, None),           # r > 0
+        (1e-8, 1.0 - 1e-8),     # 0 < p < 1
     ]
 
     def neg_log_likelihood(params):
@@ -108,8 +112,11 @@ def fit_negbinomial(data) -> NegativeBinomial:
         bounds=bounds,
         method="L-BFGS-B",
     )
+
     if not result.success:
-        raise RuntimeError(f"Negative Binomial MLE optimization failed: {result.message}")
+        raise RuntimeError(
+            f"Negative Binomial MLE optimization failed: {result.message}"
+        )
 
     r_hat, p_hat = result.x
     return NegativeBinomial(r=float(r_hat), p=float(p_hat))
@@ -182,8 +189,8 @@ def fit_mle(model_class, data, initial_params, bounds=None):
     Parameters
     ----------
     model_class : class
-        A model class that can be instantiated as model_class(*params) and
-        provides a pdf(x) method.
+        A model class that can be instantiated as model_class(*params)
+        and provides a pdf(x) method.
     data : array-like
         Observed data.
     initial_params : array-like
@@ -198,6 +205,7 @@ def fit_mle(model_class, data, initial_params, bounds=None):
     """
     data = _validate_positive_data(data)
     initial_params = np.asarray(initial_params, dtype=float)
+
     if initial_params.size == 0:
         raise ValueError("initial_params must not be empty.")
 
@@ -217,6 +225,7 @@ def fit_mle(model_class, data, initial_params, bounds=None):
         bounds=bounds,
         method="L-BFGS-B" if bounds is not None else "BFGS",
     )
+
     if not result.success:
         raise RuntimeError(f"MLE optimization failed: {result.message}")
 
