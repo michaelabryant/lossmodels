@@ -1,6 +1,13 @@
 # lossmodels
 
-**Actuarial loss models in Python.**
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
+[![License](https://img.shields.io/badge/license-MIT-green)]()
+
+A Python library for actuarial loss modeling using frequency–severity methods.
+
+---
+
+## Overview
 
 `lossmodels` is a Python library for frequency-severity modeling, aggregate loss analysis, actuarial coverage modifications, credibility, and model fitting. It is designed for actuarial students, analysts, insurance data scientists, and quantitative developers who want a lightweight, readable implementation of core loss modeling techniques.
 
