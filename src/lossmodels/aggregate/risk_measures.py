@@ -1,12 +1,10 @@
-import math
-
 import numpy as np
 
 
 def _validate_losses(losses: np.ndarray) -> np.ndarray:
     losses = np.asarray(losses, dtype=float)
     if losses.ndim != 1:
-        raise ValueError("losses must be a 1D array.")
+        raise ValueError("losses must be 1D.")
     if len(losses) == 0:
         raise ValueError("losses must not be empty.")
     return losses
@@ -14,14 +12,12 @@ def _validate_losses(losses: np.ndarray) -> np.ndarray:
 
 def _empirical_var(losses: np.ndarray, q: float) -> float:
     """
-    Empirical VaR under the discrete empirical distribution.
-
-    This returns the smallest observed loss x such that the empirical CDF
-    F_n(x) >= q. Equivalently, it is the ceil(n q)-th order statistic.
+    Empirical VaR defined as the smallest observed loss whose empirical CDF
+    is at least q.
     """
     sorted_losses = np.sort(losses)
-    n = len(sorted_losses)
-    idx = max(0, math.ceil(n * q) - 1)
+    ecdf = np.arange(1, len(sorted_losses) + 1) / len(sorted_losses)
+    idx = np.searchsorted(ecdf, q, side="left")
     return float(sorted_losses[idx])
 
 
@@ -39,8 +35,8 @@ def var(losses: np.ndarray, q: float) -> float:
     Returns
     -------
     float
-        Empirical VaR at level q, defined as the smallest observed loss x such
-        that the empirical CDF F_n(x) >= q.
+        Empirical VaR at level q, defined as the smallest observed loss
+        whose empirical CDF reaches q.
     """
     if not (0 < q < 1):
         raise ValueError("q must be between 0 and 1.")
@@ -62,8 +58,8 @@ def tvar(losses: np.ndarray, q: float) -> float:
     Returns
     -------
     float
-        Empirical TVaR at level q, defined consistently with ``var`` as
-        E[X | X >= VaR_q] under the empirical distribution.
+        Empirical TVaR at level q, computed as the mean of losses
+        greater than or equal to VaR(q).
     """
     if not (0 < q < 1):
         raise ValueError("q must be between 0 and 1.")

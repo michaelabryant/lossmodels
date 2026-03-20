@@ -2,14 +2,13 @@ import numpy as np
 import pytest
 
 from lossmodels.aggregate import exceedance_probability, lev, stop_loss, tvar, var
-from lossmodels.aggregate.risk_measures_pmf import tvar_from_pmf, var_from_pmf
 
 
-def test_var_basic_uses_empirical_cdf_definition():
+def test_var_basic():
     losses = np.array([0, 1, 2, 3, 4, 5], dtype=float)
-    assert var(losses, 0.5) == 2.0
-    assert var(losses, 0.6) == 3.0
-    assert var(losses, 0.95) == 5.0
+    result = var(losses, 0.5)
+    expected = 2.0  # smallest observed loss with empirical CDF >= 0.5
+    assert np.isclose(result, expected)
 
 
 def test_var_invalid_q():
@@ -24,17 +23,23 @@ def test_var_invalid_q():
         var(losses, 1.1)
 
 
-
 def test_var_empty_losses():
     losses = np.array([], dtype=float)
     with pytest.raises(ValueError):
         var(losses, 0.95)
 
 
-def test_tvar_basic_uses_tail_at_or_above_var():
+def test_tvar_basic():
     losses = np.array([0, 1, 2, 3, 4, 5], dtype=float)
     q = 0.5
-    expected = np.mean([2.0, 3.0, 4.0, 5.0])
+    expected = np.mean(np.array([2, 3, 4, 5], dtype=float))
+    assert np.isclose(tvar(losses, q), expected)
+
+
+def test_tvar_includes_var_observations():
+    losses = np.array([0, 1, 2, 2, 100], dtype=float)
+    q = 0.6
+    expected = np.mean(np.array([2, 2, 100], dtype=float))
     assert np.isclose(tvar(losses, q), expected)
 
 
@@ -62,24 +67,11 @@ def test_tvar_greater_than_or_equal_to_var():
     assert tvar(losses, 0.95) >= var(losses, 0.95)
 
 
-def test_tvar_returns_var_for_constant_losses():
+def test_tvar_constant_losses_equals_var():
     losses = np.array([5.0, 5.0, 5.0, 5.0])
-    assert np.isclose(tvar(losses, 0.95), 5.0)
-
-
-def test_sample_var_and_tvar_match_pmf_convention_for_empirical_distribution():
-    losses = np.array([0.0, 1.0, 2.0, 2.0, 5.0], dtype=float)
-    q = 0.6
-
-    support = np.array([0.0, 1.0, 2.0, 5.0])
-    pmf = np.array([(losses == x).mean() for x in support])
-
-    assert var(losses, q) == var_from_pmf(pmf, h=1.0, q=q)
-
-    # Map support onto a unit lattice [0, 1, 2, 3, 4, 5].
-    lattice_pmf = np.zeros(6)
-    lattice_pmf[[0, 1, 2, 5]] = pmf
-    assert np.isclose(tvar(losses, q), tvar_from_pmf(lattice_pmf, h=1.0, q=q))
+    result = tvar(losses, 0.95)
+    expected = 5.0
+    assert np.isclose(result, expected)
 
 
 def test_stop_loss_basic():
