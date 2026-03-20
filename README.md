@@ -12,6 +12,7 @@ A Python library for actuarial loss modeling using frequency–severity methods.
 `lossmodels` provides a clean, modular implementation of core actuarial techniques from *Loss Models: Data to Decisions* (Klugman, Panjer, Willmot), including:
 
 - frequency–severity modeling
+- coverage modifications (deductibles, limits, layers)
 - aggregate loss modeling (simulation, Panjer recursion, FFT)
 - parameter estimation (MLE, method of moments)
 - credibility theory
@@ -74,6 +75,12 @@ pip install -e .
 - Weibull
 - Empirical severity
 
+### Coverage
+
+- Ordinary deductible
+- Policy limit
+- Layer / excess layer
+
 ### Aggregate Modeling
 - Monte Carlo simulation
 - Panjer recursion
@@ -100,6 +107,20 @@ pip install -e .
 - PMF-based VaR / TVaR / stop-loss
 
 ---
+
+## Coverage
+
+### Layer
+
+```python
+from lossmodels.severity import Lognormal
+from lossmodels.coverage import Layer
+
+ground_up = Lognormal(mu=10.0, sigma=0.8)
+layer = Layer(ground_up, d=1000.0, u=5000.0)
+
+print(layer.mean())
+```
 
 ## Aggregate Methods
 
