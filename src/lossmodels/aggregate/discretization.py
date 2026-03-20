@@ -12,8 +12,8 @@ def discretize_severity(severity, h: float, max_loss: float, method: str = "uppe
     h : float
         Lattice step size.
     max_loss : float
-        Maximum loss level for discretization. The final bucket absorbs all
-        remaining tail probability.
+        Maximum loss level for discretization.
+        The final bucket absorbs all remaining tail probability.
     method : {"upper", "lower", "midpoint"}
         Discretization scheme.
 
@@ -38,7 +38,9 @@ def discretize_severity(severity, h: float, max_loss: float, method: str = "uppe
     probs = np.zeros(m + 1, dtype=float)
 
     if method == "upper":
-        for j in range(m):
+        # Include any point mass at 0 in the first bucket.
+        probs[0] = float(severity.cdf(h))
+        for j in range(1, m):
             left = j * h
             right = (j + 1) * h
             probs[j] = float(severity.cdf(right) - severity.cdf(left))
@@ -62,7 +64,6 @@ def discretize_severity(severity, h: float, max_loss: float, method: str = "uppe
 
     probs = np.maximum(probs, 0.0)
     total = probs.sum()
-
     if total <= 0:
         raise ValueError("Discretization produced zero total probability.")
 
@@ -75,13 +76,11 @@ def bucket_representatives(h: float, size: int) -> np.ndarray:
         raise ValueError("h must be positive.")
     if size <= 0:
         raise ValueError("size must be positive.")
-
     return h * np.arange(size, dtype=float)
 
 
 def mean_from_discretized_pmf(pmf: np.ndarray, h: float) -> float:
     pmf = np.asarray(pmf, dtype=float)
-
     if pmf.ndim != 1:
         raise ValueError("pmf must be a 1D array.")
     if len(pmf) == 0:

@@ -54,9 +54,6 @@ where = ["src"]
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q"
-testpaths = [
-    "tests"
-]
-markers = [
-    "slow: marks tests as slow",
-]
+testpaths = ["tests"]
+pythonpath = ["src]
+markers = ["slow: marks tests as slow"]

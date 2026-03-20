@@ -8,7 +8,6 @@ class OrdinaryDeductible(SeverityModel):
     Severity model with an ordinary deductible applied.
 
     If X is the ground-up loss, the payment per loss is:
-
         Y = max(X - d, 0)
 
     Parameters
@@ -22,25 +21,19 @@ class OrdinaryDeductible(SeverityModel):
     def __init__(self, severity: SeverityModel, d: float):
         if d < 0:
             raise ValueError("d must be nonnegative.")
-
         self.severity = severity
         self.d = d
 
     def sample(self, size: int = 1) -> np.ndarray:
-        """
-        Generate random samples of payment per loss after deductible.
-        """
+        """Generate random samples of payment per loss after deductible."""
         if size <= 0:
             raise ValueError("size must be positive.")
-
         ground_up = self.severity.sample(size=size)
         return np.maximum(ground_up - self.d, 0.0)
 
     def mean(self) -> float:
         """
-        Expected payment per loss after deductible:
-
-            E[(X - d)+]
+        Expected payment per loss after deductible: E[(X - d)+].
 
         Uses the underlying severity's excess_loss method if available.
         """
@@ -55,22 +48,27 @@ class OrdinaryDeductible(SeverityModel):
         samples = self.sample(size=n_sim)
         return float(np.var(samples, ddof=0))
 
+    def cdf(self, x: float) -> float:
+        """
+        CDF of the payment distribution.
+
+        For Y = (X - d)+,
+            F_Y(x) = 0,            x < 0
+                   = F_X(d + x),   x >= 0
+        """
+        if x < 0:
+            return 0.0
+        return float(self.severity.cdf(self.d + x))
+
     def payment_probability(self) -> float:
-        """
-        P(X > d): probability that a payment is made.
-        """
+        """P(X > d): probability that a payment is made."""
         return 1.0 - self.severity.cdf(self.d)
 
     def loss_elimination_ratio(self) -> float:
-        """
-        Loss Elimination Ratio (LER):
-
-            LER = (E[X] - E[(X-d)+]) / E[X]
-        """
+        """Loss Elimination Ratio (LER)."""
         ex = self.severity.mean()
         if ex == 0:
             return 0.0
-
         return (ex - self.mean()) / ex
 
     def __repr__(self) -> str:

@@ -8,7 +8,6 @@ class PolicyLimit(SeverityModel):
     Severity model with a policy limit applied.
 
     If X is the ground-up loss, the payment per loss is:
-
         Y = min(X, u)
 
     Parameters
@@ -22,25 +21,19 @@ class PolicyLimit(SeverityModel):
     def __init__(self, severity: SeverityModel, u: float):
         if u < 0:
             raise ValueError("u must be nonnegative.")
-
         self.severity = severity
         self.u = u
 
     def sample(self, size: int = 1) -> np.ndarray:
-        """
-        Generate random samples of payment per loss after policy limit.
-        """
+        """Generate random samples of payment per loss after policy limit."""
         if size <= 0:
             raise ValueError("size must be positive.")
-
         ground_up = self.severity.sample(size=size)
         return np.minimum(ground_up, self.u)
 
     def mean(self) -> float:
         """
-        Expected payment per loss after policy limit:
-
-            E[min(X, u)]
+        Expected payment per loss after policy limit: E[min(X, u)].
 
         Uses the underlying severity's limited_expected_value method.
         """
@@ -55,22 +48,30 @@ class PolicyLimit(SeverityModel):
         samples = self.sample(size=n_sim)
         return float(np.var(samples, ddof=0))
 
+    def cdf(self, x: float) -> float:
+        """
+        CDF of the payment distribution.
+
+        For Y = min(X, u),
+            F_Y(x) = 0,       x < 0
+                   = F_X(x),  0 <= x < u
+                   = 1,       x >= u
+        """
+        if x < 0:
+            return 0.0
+        if x >= self.u:
+            return 1.0
+        return float(self.severity.cdf(x))
+
     def probability_capped(self) -> float:
-        """
-        P(X > u): probability that the limit is binding.
-        """
+        """P(X > u): probability that the limit is binding."""
         return 1.0 - self.severity.cdf(self.u)
 
     def loss_elimination_ratio(self) -> float:
-        """
-        Loss Elimination Ratio (LER):
-
-            LER = (E[X] - E[min(X,u)]) / E[X]
-        """
+        """Loss Elimination Ratio (LER)."""
         ex = self.severity.mean()
         if ex == 0:
             return 0.0
-
         return (ex - self.mean()) / ex
 
     def __repr__(self) -> str:

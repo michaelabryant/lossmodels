@@ -8,7 +8,6 @@ class Layer(SeverityModel):
     Severity model with a deductible and a payment limit applied.
 
     If X is the ground-up loss, the payment per loss is:
-
         Y = min((X - d)+, u)
 
     where:
@@ -30,56 +29,52 @@ class Layer(SeverityModel):
             raise ValueError("d must be nonnegative.")
         if u < 0:
             raise ValueError("u must be nonnegative.")
-
         self.severity = severity
         self.d = d
         self.u = u
 
     def sample(self, size: int = 1) -> np.ndarray:
-        """
-        Generate random samples of payment per loss in the layer.
-        """
+        """Generate random samples of payment per loss in the layer."""
         if size <= 0:
             raise ValueError("size must be positive.")
-
         ground_up = self.severity.sample(size=size)
         return np.minimum(np.maximum(ground_up - self.d, 0.0), self.u)
 
     def mean(self) -> float:
         """
-        Expected payment per loss in the layer:
-
-            E[min((X-d)+, u)]
+        Expected payment per loss in the layer: E[min((X-d)+, u)].
 
         This can be written as:
-
             E[(X-d)+] - E[(X-d-u)+]
         """
         return self.severity.excess_loss(self.d) - self.severity.excess_loss(self.d + self.u)
 
     def variance(self, n_sim: int = 100_000) -> float:
-        """
-        Variance of payment per loss in the layer.
-
-        Default implementation uses simulation.
-        """
+        """Variance of payment per loss in the layer."""
         samples = self.sample(size=n_sim)
         return float(np.var(samples, ddof=0))
 
-    def payment_probability(self) -> float:
+    def cdf(self, x: float) -> float:
         """
-        Probability that the layer pays anything:
+        CDF of the payment distribution.
 
-            P(X > d)
+        For Y = min((X - d)+, u),
+            F_Y(x) = 0,            x < 0
+                   = F_X(d + x),   0 <= x < u
+                   = 1,            x >= u
         """
+        if x < 0:
+            return 0.0
+        if x >= self.u:
+            return 1.0
+        return float(self.severity.cdf(self.d + x))
+
+    def payment_probability(self) -> float:
+        """Probability that the layer pays anything: P(X > d)."""
         return 1.0 - self.severity.cdf(self.d)
 
     def exhaustion_probability(self) -> float:
-        """
-        Probability that the layer is fully exhausted:
-
-            P(X > d + u)
-        """
+        """Probability that the layer is fully exhausted: P(X > d + u)."""
         return 1.0 - self.severity.cdf(self.d + self.u)
 
     def __repr__(self) -> str:
