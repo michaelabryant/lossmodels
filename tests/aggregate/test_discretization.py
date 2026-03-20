@@ -63,8 +63,11 @@ def test_discretize_severity_requires_cdf():
 def test_discretize_severity_upper_includes_mass_at_zero():
     sev = OrdinaryDeductible(Exponential(rate=1.0), d=1.0)
     pmf = discretize_severity(sev, h=0.1, max_loss=5.0, method="upper")
-    expected_first_bucket = sev.cdf(0.1)
-    assert np.isclose(pmf[0], expected_first_bucket, atol=1e-12)
+
+    expected_mass_at_zero = sev.cdf(0.0)
+    assert np.isclose(pmf[0], expected_mass_at_zero + (sev.cdf(0.1) - sev.cdf(0.0)))
+    assert pmf[0] >= expected_mass_at_zero
+    assert np.isclose(pmf.sum(), 1.0)
 
 
 def test_discretize_severity_works_for_coverage_transforms():

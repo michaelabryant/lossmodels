@@ -38,7 +38,7 @@ def discretize_severity(severity, h: float, max_loss: float, method: str = "uppe
     probs = np.zeros(m + 1, dtype=float)
 
     if method == "upper":
-        # Include any point mass at 0 in the first bucket.
+        # Bucket 0 represents losses in [0, h] and must include any atom at 0.
         probs[0] = float(severity.cdf(h))
         for j in range(1, m):
             left = j * h
