@@ -10,12 +10,14 @@ def test_poisson_init_valid():
     assert model.lam == 3.0
 
 
-def test_poisson_init_invalid_lam():
+def test_poisson_init_negative_lam_rejected():
     with pytest.raises(ValueError):
-        Poisson(lam=0.0)
+        Poisson(-1.0)
 
-    with pytest.raises(ValueError):
-        Poisson(lam=-1.0)
+
+def test_poisson_init_zero_lam_allowed():
+    model = Poisson(0.0)
+    assert model.lam == 0.0
 
 
 def test_poisson_mean():

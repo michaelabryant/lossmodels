@@ -132,9 +132,9 @@ def test_fit_poisson_invalid_data():
         fit_poisson([0, 1.5, 2])
 
 
-def test_fit_poisson_zero_mean_rejected():
-    with pytest.raises(ValueError):
-        fit_poisson([0, 0, 0])
+def test_fit_poisson_zero_mean_returns_zero_lambda():
+    model = fit_poisson([0, 0, 0])
+    assert model.lam == 0.0
 
 
 # ---------------------------
