@@ -19,8 +19,9 @@ A Python library for actuarial loss modeling using frequency–severity methods.
 
 Designed for:
 - actuarial analysts
+- actuaries
 - quantitative developers
-- researchers working with insurance loss data
+- data scientists working with insurance loss data
 
 ---
 
