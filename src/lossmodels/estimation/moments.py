@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..frequency import Poisson
+from ..frequency import NegativeBinomial, Poisson
 from ..severity import Exponential, Gamma, Lognormal, Weibull
 
 
@@ -32,6 +32,42 @@ def _validate_count_data(data, name: str = "data") -> np.ndarray:
         raise ValueError(f"{name} must contain only integer-valued counts.")
 
     return data.astype(int)
+
+
+def fit_negbinomial_moments(data) -> NegativeBinomial:
+    """
+    Fit a Negative Binomial frequency model by the method of moments.
+
+    Parameterization
+    ----------------
+    Mean = r(1-p)/p
+    Variance = r(1-p)/p^2
+
+    Solving:
+        p_hat = mean / variance
+        r_hat = mean^2 / (variance - mean)
+
+    Notes
+    -----
+    This requires variance > mean. If variance <= mean, the method-of-moments
+    Negative Binomial fit is not valid.
+    """
+    data = _validate_count_data(data)
+
+    mean_x = float(np.mean(data))
+    var_x = float(np.var(data, ddof=0))
+
+    if mean_x <= 0:
+        raise ValueError("Sample mean must be positive.")
+    if var_x <= mean_x:
+        raise ValueError(
+            "Negative Binomial method-of-moments requires variance > mean."
+        )
+
+    p_hat = mean_x / var_x
+    r_hat = mean_x**2 / (var_x - mean_x)
+
+    return NegativeBinomial(r=float(r_hat), p=float(p_hat))
 
 
 def fit_poisson_moments(data) -> Poisson:

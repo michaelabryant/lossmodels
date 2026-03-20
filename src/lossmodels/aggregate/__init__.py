@@ -17,6 +17,13 @@ from .fft import (
     mean_from_aggregate_pmf_fft,
 )
 
+from .risk_measures_pmf import (
+    var_from_pmf,
+    tvar_from_pmf,
+    stop_loss_from_pmf,
+    mean_from_pmf,
+)
+
 __all__ = [
     "AggregateModel",
     "CollectiveRiskModel",
@@ -34,4 +41,8 @@ __all__ = [
     "fft_aggregate_poisson",
     "cdf_from_pmf_fft",
     "mean_from_aggregate_pmf_fft",
+    "var_from_pmf",
+    "tvar_from_pmf",
+    "stop_loss_from_pmf",
+    "mean_from_pmf",
 ]

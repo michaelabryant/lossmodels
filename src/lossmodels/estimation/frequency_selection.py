@@ -1,54 +1,40 @@
 import numpy as np
 
 from .diagnostics import aic, bic
-from .mle import fit_poisson
-from .moments import fit_poisson_moments
+from .mle import fit_poisson, fit_negbinomial
+from .moments import fit_poisson_moments, fit_negbinomial_moments
 
 
 FREQUENCY_MLE_FITTERS = {
     "poisson": (fit_poisson, 1),
+    "negbinomial": (fit_negbinomial, 2),
 }
 
 FREQUENCY_MOMENT_FITTERS = {
     "poisson": (fit_poisson_moments, 1),
+    "negbinomial": (fit_negbinomial_moments, 2),
 }
 
 
 def fit_best_frequency(data, candidates=None, method="mle", criterion="aic"):
     """
     Fit a set of frequency models and return the best one by AIC or BIC.
-
-    Parameters
-    ----------
-    data : array-like
-        Frequency observations.
-    candidates : list of str, optional
-        Candidate model names. Defaults to all supported frequency fitters.
-    method : {"mle", "moments"}
-        Fitting method.
-    criterion : {"aic", "bic"}
-        Selection criterion.
-
-    Returns
-    -------
-    dict
-        Dictionary with keys:
-        - "best_name"
-        - "best_model"
-        - "criterion"
-        - "method"
-        - "results"
     """
     data = np.asarray(data)
+
     if data.size == 0:
         raise ValueError("data must not be empty.")
+    if np.any(data < 0):
+        raise ValueError("frequency data must be nonnegative.")
 
     if method not in {"mle", "moments"}:
         raise ValueError("method must be 'mle' or 'moments'.")
     if criterion not in {"aic", "bic"}:
         raise ValueError("criterion must be 'aic' or 'bic'.")
 
-    fitters = FREQUENCY_MLE_FITTERS if method == "mle" else FREQUENCY_MOMENT_FITTERS
+    fitters = (
+        FREQUENCY_MLE_FITTERS if method == "mle" else FREQUENCY_MOMENT_FITTERS
+    )
 
     if candidates is None:
         candidates = list(fitters.keys())
@@ -71,6 +57,7 @@ def fit_best_frequency(data, candidates=None, method="mle", criterion="aic"):
                 "k": k,
                 "score": float(score),
             })
+
         except Exception as exc:
             results.append({
                 "name": name,

@@ -7,11 +7,12 @@ from lossmodels.estimation import (
     fit_exponential,
     fit_gamma,
     fit_lognormal,
+    fit_negbinomial,
     fit_poisson,
     fit_weibull,
     fit_mle,
 )
-from lossmodels.frequency import Poisson
+from lossmodels.frequency import NegativeBinomial, Poisson
 from lossmodels.severity import Exponential, Gamma, Lognormal, Weibull
 
 
@@ -80,6 +81,28 @@ def test_fit_lognormal_invalid_data():
 
 
 # ---------------------------
+# fit_negbinomial
+# ---------------------------
+
+def test_fit_negbinomial_returns_model():
+    np.random.seed(123)
+    data = np.random.negative_binomial(n=3, p=0.5, size=1000)
+
+    model = fit_negbinomial(data)
+
+    assert isinstance(model, NegativeBinomial)
+
+
+def test_fit_negbinomial_recovers_mean_reasonably():
+    np.random.seed(123)
+    data = np.random.negative_binomial(n=3, p=0.5, size=2000)
+
+    model = fit_negbinomial(data)
+
+    assert np.isclose(model.mean(), np.mean(data), rtol=0.05)
+
+
+# ---------------------------
 # fit_poisson
 # ---------------------------
 
@@ -120,7 +143,7 @@ def test_fit_poisson_zero_mean_rejected():
 
 def test_fit_gamma_returns_model():
     np.random.seed(123)
-    data = np.random.gamma(shape=2.0, scale=3.0, size=5000)
+    data = np.random.gamma(shape=2.0, scale=3.0, size=1000)
 
     model = fit_gamma(data)
 
@@ -129,7 +152,7 @@ def test_fit_gamma_returns_model():
 
 def test_fit_gamma_recovers_mean_reasonably():
     np.random.seed(123)
-    data = np.random.gamma(shape=2.0, scale=3.0, size=10000)
+    data = np.random.gamma(shape=2.0, scale=3.0, size=2000)
 
     model = fit_gamma(data)
 
@@ -153,7 +176,7 @@ def test_fit_gamma_invalid_data():
 
 def test_fit_weibull_returns_model():
     np.random.seed(123)
-    data = 2.0 * np.random.weibull(a=1.5, size=5000)
+    data = 2.0 * np.random.weibull(a=1.5, size=1000)
 
     model = fit_weibull(data)
 
@@ -162,7 +185,7 @@ def test_fit_weibull_returns_model():
 
 def test_fit_weibull_recovers_mean_reasonably():
     np.random.seed(123)
-    data = 2.0 * np.random.weibull(a=1.5, size=10000)
+    data = 2.0 * np.random.weibull(a=1.5, size=2000)
 
     model = fit_weibull(data)
 
@@ -200,7 +223,7 @@ def test_fit_mle_exponential_returns_model():
 
 def test_fit_mle_exponential_recovers_rate_reasonably():
     np.random.seed(123)
-    data = np.random.exponential(scale=2.0, size=10000)  # true rate = 0.5
+    data = np.random.exponential(scale=2.0, size=2000)  # true rate = 0.5
 
     model = fit_mle(
         Exponential,
@@ -214,7 +237,7 @@ def test_fit_mle_exponential_recovers_rate_reasonably():
 
 def test_fit_mle_lognormal_returns_model():
     np.random.seed(123)
-    data = np.random.lognormal(mean=1.0, sigma=0.5, size=5000)
+    data = np.random.lognormal(mean=1.0, sigma=0.5, size=1000)
 
     model = fit_mle(
         Lognormal,
@@ -230,7 +253,7 @@ def test_fit_mle_lognormal_recovers_parameters_reasonably():
     np.random.seed(123)
     true_mu = 1.0
     true_sigma = 0.5
-    data = np.random.lognormal(mean=true_mu, sigma=true_sigma, size=10000)
+    data = np.random.lognormal(mean=true_mu, sigma=true_sigma, size=2000)
 
     model = fit_mle(
         Lognormal,

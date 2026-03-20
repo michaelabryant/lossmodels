@@ -4,6 +4,7 @@ from .mle import (
     fit_lognormal,
     fit_poisson,
     fit_weibull,
+    fit_negbinomial,
     fit_mle,
 )
 from .moments import (
@@ -12,6 +13,7 @@ from .moments import (
     fit_lognormal_moments,
     fit_poisson_moments,
     fit_weibull_moments,
+    fit_negbinomial_moments,
 )
 from .diagnostics import log_likelihood, aic, bic
 from .model_selection import fit_best_severity
@@ -23,12 +25,14 @@ __all__ = [
     "fit_lognormal",
     "fit_poisson",
     "fit_weibull",
+    "fit_negbinomial",
     "fit_mle",
     "fit_exponential_moments",
     "fit_gamma_moments",
     "fit_lognormal_moments",
     "fit_poisson_moments",
     "fit_weibull_moments",
+    "fit_negbinomial_moments",
     "log_likelihood",
     "aic",
     "bic",

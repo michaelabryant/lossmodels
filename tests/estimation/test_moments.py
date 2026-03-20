@@ -5,12 +5,41 @@ from lossmodels.estimation import (
     fit_exponential_moments,
     fit_gamma_moments,
     fit_lognormal_moments,
+    fit_negbinomial_moments,
     fit_poisson_moments,
     fit_weibull_moments,
 )
-from lossmodels.frequency import Poisson
+from lossmodels.frequency import NegativeBinomial, Poisson
 from lossmodels.severity import Exponential, Gamma, Lognormal, Weibull
 
+
+# ---------------------------
+# Negative Binomial
+# ---------------------------
+
+def test_fit_negbinomial_moments_returns_model():
+    np.random.seed(123)
+    data = np.random.negative_binomial(n=3, p=0.5, size=1000)
+
+    model = fit_negbinomial_moments(data)
+
+    assert isinstance(model, NegativeBinomial)
+
+
+def test_fit_negbinomial_moments_recovers_mean_reasonably():
+    np.random.seed(123)
+    data = np.random.negative_binomial(n=3, p=0.5, size=2000)
+
+    model = fit_negbinomial_moments(data)
+
+    assert np.isclose(model.mean(), np.mean(data), rtol=0.05)
+
+
+def test_fit_negbinomial_moments_requires_overdispersion():
+    data = np.array([0, 1, 2, 1, 2, 1, 0, 1])
+
+    with pytest.raises(ValueError):
+        fit_negbinomial_moments(data)
 
 # ---------------------------
 # Poisson
@@ -91,7 +120,7 @@ def test_fit_gamma_moments_returns_model():
 
 def test_fit_gamma_moments_recovers_mean_reasonably():
     np.random.seed(123)
-    data = np.random.gamma(shape=2.0, scale=3.0, size=10000)
+    data = np.random.gamma(shape=2.0, scale=3.0, size=2000)
 
     model = fit_gamma_moments(data)
 
@@ -100,7 +129,7 @@ def test_fit_gamma_moments_recovers_mean_reasonably():
 
 def test_fit_gamma_moments_recovers_variance_reasonably():
     np.random.seed(123)
-    data = np.random.gamma(shape=2.0, scale=3.0, size=10000)
+    data = np.random.gamma(shape=2.0, scale=3.0, size=2000)
 
     model = fit_gamma_moments(data)
 
@@ -129,7 +158,7 @@ def test_fit_gamma_moments_zero_variance_rejected():
 
 def test_fit_lognormal_moments_returns_model():
     np.random.seed(123)
-    data = np.random.lognormal(mean=1.0, sigma=0.5, size=5000)
+    data = np.random.lognormal(mean=1.0, sigma=0.5, size=1000)
 
     model = fit_lognormal_moments(data)
 
@@ -138,7 +167,7 @@ def test_fit_lognormal_moments_returns_model():
 
 def test_fit_lognormal_moments_recovers_mean_reasonably():
     np.random.seed(123)
-    data = np.random.lognormal(mean=1.0, sigma=0.5, size=10000)
+    data = np.random.lognormal(mean=1.0, sigma=0.5, size=2000)
 
     model = fit_lognormal_moments(data)
 
@@ -147,7 +176,7 @@ def test_fit_lognormal_moments_recovers_mean_reasonably():
 
 def test_fit_lognormal_moments_recovers_variance_reasonably():
     np.random.seed(123)
-    data = np.random.lognormal(mean=1.0, sigma=0.5, size=10000)
+    data = np.random.lognormal(mean=1.0, sigma=0.5, size=2000)
 
     model = fit_lognormal_moments(data)
 
@@ -176,7 +205,7 @@ def test_fit_lognormal_moments_zero_variance_case():
 
 def test_fit_weibull_moments_returns_model():
     np.random.seed(123)
-    data = 2.0 * np.random.weibull(a=1.5, size=5000)
+    data = 2.0 * np.random.weibull(a=1.5, size=1000)
 
     model = fit_weibull_moments(data)
 
@@ -185,7 +214,7 @@ def test_fit_weibull_moments_returns_model():
 
 def test_fit_weibull_moments_recovers_mean_reasonably():
     np.random.seed(123)
-    data = 2.0 * np.random.weibull(a=1.5, size=10000)
+    data = 2.0 * np.random.weibull(a=1.5, size=2000)
 
     model = fit_weibull_moments(data)
 
@@ -194,7 +223,7 @@ def test_fit_weibull_moments_recovers_mean_reasonably():
 
 def test_fit_weibull_moments_recovers_variance_reasonably():
     np.random.seed(123)
-    data = 2.0 * np.random.weibull(a=1.5, size=10000)
+    data = 2.0 * np.random.weibull(a=1.5, size=2000)
 
     model = fit_weibull_moments(data)
 

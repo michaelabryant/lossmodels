@@ -1,8 +1,9 @@
 import numpy as np
 from scipy.stats import gamma as gamma_dist
 from scipy.stats import weibull_min
+from scipy.optimize import minimize
 
-from ..frequency import Poisson
+from ..frequency import NegativeBinomial, Poisson
 from ..severity import Exponential, Gamma, Lognormal, Weibull
 
 
@@ -75,6 +76,64 @@ def fit_lognormal(data) -> Lognormal:
 
     return Lognormal(mu=mu_hat, sigma=sigma_hat)
 
+
+def fit_negbinomial(data) -> NegativeBinomial:
+    """
+    Fit a Negative Binomial frequency model by numerical maximum likelihood.
+
+    Parameterization
+    ----------------
+    N = number of failures before the r-th success
+    Support: {0, 1, 2, ...}
+
+    Mean = r(1-p)/p
+    Variance = r(1-p)/p^2
+    """
+    data = _validate_count_data(data)
+
+    mean_x = float(np.mean(data))
+    var_x = float(np.var(data, ddof=0))
+
+    # Use method-of-moments style starting values when possible
+    if var_x > mean_x and mean_x > 0:
+        p0 = mean_x / var_x
+        r0 = mean_x**2 / (var_x - mean_x)
+        initial = np.array([r0, p0], dtype=float)
+    else:
+        # fallback starting values
+        initial = np.array([1.0, 0.5], dtype=float)
+
+    bounds = [
+        (1e-8, None),          # r > 0
+        (1e-8, 1.0 - 1e-8),    # 0 < p < 1
+    ]
+
+    def neg_log_likelihood(params):
+        r, p = params
+
+        try:
+            model = NegativeBinomial(r=r, p=p)
+            pmf_vals = np.array([model.pmf(int(x)) for x in data], dtype=float)
+
+            if np.any(~np.isfinite(pmf_vals)) or np.any(pmf_vals <= 0):
+                return np.inf
+
+            return float(-np.sum(np.log(pmf_vals)))
+        except Exception:
+            return np.inf
+
+    result = minimize(
+        neg_log_likelihood,
+        x0=initial,
+        bounds=bounds,
+        method="L-BFGS-B",
+    )
+
+    if not result.success:
+        raise RuntimeError(f"Negative Binomial MLE optimization failed: {result.message}")
+
+    r_hat, p_hat = result.x
+    return NegativeBinomial(r=float(r_hat), p=float(p_hat))
 
 def fit_poisson(data) -> Poisson:
     """
