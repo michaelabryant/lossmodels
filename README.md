@@ -184,6 +184,7 @@ Planned improvements:
 - Bootstrap methods
 - Performance optimization
 - Additional distributions
+- Documentation
 
 ---
 
