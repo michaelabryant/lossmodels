@@ -6,32 +6,47 @@ A Python library for actuarial loss modeling using frequency–severity methods.
 
 ## Overview
 
-`lossmodels` is a modular Python library for modeling aggregate insurance losses using classical actuarial techniques from *Loss Models*.
+`lossmodels` is a modular Python library implementing core material from *Loss Models* in a clean, testable, and extensible Python framework.
 
-The library combines:
-- theoretical actuarial models
-- statistical estimation
-- numerical aggregate methods
-
-into a single, consistent framework.
+It supports:
+- distribution modeling
+- parameter estimation
+- aggregate loss modeling
+- credibility theory
+- risk measurement
 
 ---
 
 ## Features
 
-### Core Modeling
-- Frequency distributions (Poisson, Binomial, Geometric, Negative Binomial)
-- Severity distributions (Exponential, Gamma, Lognormal, Pareto, Weibull)
-- Empirical frequency and severity models
+### Frequency Models
+- Poisson
+- Negative Binomial
+- Binomial
+- Geometric
+- Empirical frequency
+
+### Severity Models
+- Exponential
+- Gamma
+- Lognormal
+- Pareto
+- Weibull
+- Empirical severity
 
 ### Aggregate Modeling
 - Monte Carlo simulation
 - Panjer recursion
-- FFT-based aggregate computation
+- FFT (Fast Fourier Transform)
+
+### Discretization
+- Upper
+- Lower
+- Midpoint (recommended)
 
 ### Coverage Modifications
-- Ordinary deductibles
-- Policy limits
+- Deductibles
+- Limits
 - Layers
 
 ### Estimation
@@ -39,23 +54,30 @@ into a single, consistent framework.
 - Method of Moments
 - Generic numerical MLE
 
-### Model Diagnostics
-- Log-likelihood
-- AIC / BIC
-
 ### Model Selection
-- Automatic severity selection (`fit_best_severity`)
-- Automatic frequency selection (`fit_best_frequency`)
+- Best severity selection (AIC / BIC)
+- Best frequency selection (Poisson, Negative Binomial)
+
+### Diagnostics
+- Log-likelihood
+- AIC
+- BIC
 
 ### Credibility
-- Bühlmann model
-- Bühlmann–Straub model
+- Bühlmann
+- Bühlmann–Straub
 
 ### Risk Measures
 - VaR
 - TVaR
 - Stop-loss
-- Limited expected value (LEV)
+- Limited Expected Value (LEV)
+
+### Aggregate PMF Risk Measures
+- VaR from PMF
+- TVaR from PMF
+- Stop-loss from PMF
+- Mean from PMF
 
 ---
 
@@ -69,7 +91,7 @@ pip install -e .
 
 ---
 
-## Quick Start
+## Quick Example
 
 ```python
 from lossmodels.frequency import Poisson
@@ -81,9 +103,9 @@ sev = Lognormal(mu=10.0, sigma=0.8)
 
 model = CollectiveRiskModel(freq, sev)
 
-print("Mean:", model.mean())
-print("VaR 95%:", model.var(0.95))
-print("TVaR 95%:", model.tvar(0.95))
+print(model.mean())
+print(model.var(0.95))
+print(model.tvar(0.95))
 ```
 
 ---
@@ -96,13 +118,13 @@ print("TVaR 95%:", model.tvar(0.95))
 samples = model.sample(100_000)
 ```
 
-### Panjer recursion
+### Panjer Recursion
 
 ```python
 from lossmodels.aggregate import discretize_severity, panjer_recursion
 
-severity_pmf = discretize_severity(sev, h=0.01, max_loss=20.0, method="midpoint")
-aggregate_pmf = panjer_recursion(freq, severity_pmf, n_steps=5000)
+pmf = discretize_severity(sev, h=0.01, max_loss=20.0)
+agg = panjer_recursion(freq, pmf, n_steps=5000)
 ```
 
 ### FFT
@@ -110,21 +132,18 @@ aggregate_pmf = panjer_recursion(freq, severity_pmf, n_steps=5000)
 ```python
 from lossmodels.aggregate import fft_aggregate_poisson
 
-aggregate_pmf = fft_aggregate_poisson(freq, severity_pmf, n_steps=5000)
+agg = fft_aggregate_poisson(freq, pmf, n_steps=5000)
 ```
 
 ---
 
-## Discretization Methods
-
-The library supports multiple discretization schemes:
-
-- `upper`
-- `lower`
-- `midpoint` (recommended)
+## Risk Measures from PMF
 
 ```python
-severity_pmf = discretize_severity(sev, h=0.01, max_loss=20.0, method="midpoint")
+from lossmodels.aggregate import var_from_pmf, tvar_from_pmf
+
+var95 = var_from_pmf(agg, h=0.01, q=0.95)
+tvar95 = tvar_from_pmf(agg, h=0.01, q=0.95)
 ```
 
 ---
@@ -165,51 +184,27 @@ model = fit_mle(
 
 ## Model Selection
 
-### Severity
-
 ```python
-from lossmodels.estimation import fit_best_severity
+from lossmodels.estimation import fit_best_severity, fit_best_frequency
 
-result = fit_best_severity(data)
-
-print(result["best_name"])
-print(result["best_model"])
-```
-
-### Frequency
-
-```python
-from lossmodels.estimation import fit_best_frequency
-
-result = fit_best_frequency(freq_data)
-
-print(result["best_name"])
-print(result["best_model"])
+sev_result = fit_best_severity(data)
+freq_result = fit_best_frequency(freq_data)
 ```
 
 ---
 
 ## Credibility
 
-### Bühlmann
-
 ```python
-from lossmodels.credibility import Buhlmann
+from lossmodels.credibility import Buhlmann, BuhlmannStraub
 
-model = Buhlmann.fit(data)
-```
-
-### Bühlmann–Straub
-
-```python
-from lossmodels.credibility import BuhlmannStraub
-
-model = BuhlmannStraub.fit(data, weights)
+buhlmann = Buhlmann.fit(data)
+bs = BuhlmannStraub.fit(data, weights)
 ```
 
 ---
 
-## Coverage Modifications
+## Coverage
 
 ```python
 from lossmodels.coverage import OrdinaryDeductible, PolicyLimit, Layer
@@ -223,43 +218,40 @@ layer = Layer(sev, d=10000, u=40000)
 
 ## Examples
 
-Available in the `examples/` directory:
+See the `examples/` directory for:
 
-- `fit_and_compare_models.py`
-- `panjer_vs_simulation.py`
-- `panjer_vs_fft_vs_simulation.py`
-- `credibility_example.py`
-- coverage examples (deductible, limit, layer)
-- stop-loss examples
+- panjer_vs_simulation.py
+- panjer_vs_fft_vs_simulation.py
+- fit_and_compare_models.py
+- credibility_example.py
 
 ---
 
-## Development
+## Testing
 
-Run tests:
+Run all tests:
 
 ```bash
 pytest -v
+```
+
+Run fast tests only:
+
+```bash
+pytest -v -m "not slow"
 ```
 
 ---
 
 ## Project Status
 
-This project is actively under development.
+Core *Loss Models* functionality is implemented.
 
-Goal:
-> Implement the core topics of *Loss Models* in a clean, production-quality Python library before publishing to PyPI.
-
----
-
-## Future Work
-
-- Improved discretization (bias reduction, moment matching)
-- Additional frequency models in selection
-- EVT / tail modeling
-- Bootstrap / uncertainty estimation
+Remaining potential extensions:
+- Extreme Value Theory (EVT)
+- Bootstrap methods
 - Performance optimization
+- Additional distributions
 
 ---
 
