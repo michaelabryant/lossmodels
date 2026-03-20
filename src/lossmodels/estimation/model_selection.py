@@ -5,12 +5,14 @@ from .mle import (
     fit_exponential,
     fit_gamma,
     fit_lognormal,
+    fit_pareto,
     fit_weibull,
 )
 from .moments import (
     fit_exponential_moments,
     fit_gamma_moments,
     fit_lognormal_moments,
+    fit_pareto_moments,
     fit_weibull_moments,
 )
 
@@ -19,6 +21,7 @@ SEVERITY_MLE_FITTERS = {
     "exponential": (fit_exponential, 1),
     "gamma": (fit_gamma, 2),
     "lognormal": (fit_lognormal, 2),
+    "pareto": (fit_pareto, 2),
     "weibull": (fit_weibull, 2),
 }
 
@@ -26,6 +29,7 @@ SEVERITY_MOMENT_FITTERS = {
     "exponential": (fit_exponential_moments, 1),
     "gamma": (fit_gamma_moments, 2),
     "lognormal": (fit_lognormal_moments, 2),
+    "pareto": (fit_pareto_moments, 2),
     "weibull": (fit_weibull_moments, 2),
 }
 
@@ -102,7 +106,13 @@ def fit_best_severity(data, candidates=None, method="mle", criterion="aic"):
 
     valid = [r for r in results if np.isfinite(r["score"])]
     if not valid:
-        raise RuntimeError("No candidate models could be fit successfully.")
+        error_details = "; ".join(
+            f'{r["name"]}: {r.get("error", "unknown error")}'
+            for r in results
+        )
+        raise RuntimeError(
+            f"No candidate models could be fit successfully. Errors: {error_details}"
+        )
 
     best = min(valid, key=lambda r: r["score"])
 

@@ -8,8 +8,8 @@ def log_likelihood(model, data) -> float:
     Parameters
     ----------
     model : object
-        Model instance with a pdf(x) method for continuous models or
-        pmf(x) method for discrete models.
+        Model instance with a pdf(x) method for continuous models
+        or pmf(x) method for discrete models.
     data : array-like
         Observed data.
 
@@ -19,7 +19,6 @@ def log_likelihood(model, data) -> float:
         Log-likelihood value.
     """
     data = np.asarray(data)
-
     if data.size == 0:
         raise ValueError("data must not be empty.")
 
@@ -58,7 +57,6 @@ def aic(model, data, k: int) -> float:
         raise ValueError("k must be positive.")
 
     ll = log_likelihood(model, data)
-
     if not np.isfinite(ll):
         return float(np.inf)
 
@@ -84,14 +82,12 @@ def bic(model, data, k: int) -> float:
         BIC value.
     """
     data = np.asarray(data)
-
     if data.size == 0:
         raise ValueError("data must not be empty.")
     if k <= 0:
         raise ValueError("k must be positive.")
 
     ll = log_likelihood(model, data)
-
     if not np.isfinite(ll):
         return float(np.inf)
 

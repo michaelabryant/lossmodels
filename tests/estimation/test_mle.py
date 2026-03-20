@@ -8,12 +8,13 @@ from lossmodels.estimation import (
     fit_gamma,
     fit_lognormal,
     fit_negbinomial,
+    fit_pareto,
     fit_poisson,
     fit_weibull,
     fit_mle,
 )
 from lossmodels.frequency import NegativeBinomial, Poisson
-from lossmodels.severity import Exponential, Gamma, Lognormal, Weibull
+from lossmodels.severity import Exponential, Gamma, Lognormal, Pareto, Weibull
 
 
 # ---------------------------
@@ -169,6 +170,46 @@ def test_fit_gamma_invalid_data():
     with pytest.raises(ValueError):
         fit_gamma([1.0, -1.0, 2.0])
 
+
+# ---------------------------
+# fit_pareto
+# ---------------------------
+
+def test_fit_pareto_returns_model():
+    np.random.seed(123)
+    data = 2.0 * (1.0 + np.random.pareto(a=3.0, size=1000))
+
+    model = fit_pareto(data)
+
+    assert isinstance(model, Pareto)
+
+
+def test_fit_pareto_matches_closed_form_mle():
+    data = np.array([2.0, 3.0, 4.0, 8.0], dtype=float)
+
+    model = fit_pareto(data)
+
+    expected_theta = np.min(data)
+    expected_alpha = len(data) / np.sum(np.log(data / expected_theta))
+
+    assert np.isclose(model.theta, expected_theta)
+    assert np.isclose(model.alpha, expected_alpha)
+
+
+def test_fit_pareto_invalid_data():
+    with pytest.raises(ValueError):
+        fit_pareto([])
+
+    with pytest.raises(ValueError):
+        fit_pareto([1.0, 0.0, 2.0])
+
+    with pytest.raises(ValueError):
+        fit_pareto([1.0, -1.0, 2.0])
+
+
+def test_fit_pareto_all_equal_data_raises():
+    with pytest.raises(ValueError):
+        fit_pareto([2.0, 2.0, 2.0, 2.0])
 
 # ---------------------------
 # fit_weibull

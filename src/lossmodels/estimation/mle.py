@@ -4,7 +4,7 @@ from scipy.stats import gamma as gamma_dist
 from scipy.stats import weibull_min
 
 from ..frequency import NegativeBinomial, Poisson
-from ..severity import Exponential, Gamma, Lognormal, Weibull
+from ..severity import Exponential, Gamma, Lognormal, Pareto, Weibull
 
 
 def _validate_positive_data(data, name: str = "data") -> np.ndarray:
@@ -159,6 +159,37 @@ def fit_gamma(data) -> Gamma:
     if loc_hat != 0:
         raise RuntimeError("Gamma fit returned nonzero location despite floc=0.")
     return Gamma(alpha=float(alpha_hat), theta=float(theta_hat))
+
+
+def fit_pareto(data) -> Pareto:
+    """
+    Fit a Pareto Type I severity model by maximum likelihood.
+
+    For X_i ~ Pareto(alpha, theta) with support x >= theta, the MLEs are:
+
+        theta_hat = min(data)
+        alpha_hat = n / sum(log(data / theta_hat))
+
+    Returns
+    -------
+    Pareto
+        Fitted Pareto(alpha, theta) model.
+    """
+    data = _validate_positive_data(data)
+
+    theta_hat = float(np.min(data))
+    if theta_hat <= 0:
+        raise ValueError("Estimated theta must be positive.")
+
+    log_ratios = np.log(data / theta_hat)
+    denom = float(np.sum(log_ratios))
+    if denom <= 0:
+        raise ValueError(
+            "Pareto MLE requires data with at least one observation above the minimum."
+        )
+
+    alpha_hat = float(len(data) / denom)
+    return Pareto(alpha=alpha_hat, theta=theta_hat)
 
 
 def fit_weibull(data) -> Weibull:

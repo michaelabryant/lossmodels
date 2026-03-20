@@ -3,7 +3,7 @@ from scipy.optimize import brentq
 from scipy.special import gamma as gamma_func, gammaln
 
 from ..frequency import NegativeBinomial, Poisson
-from ..severity import Exponential, Gamma, Lognormal, Weibull
+from ..severity import Exponential, Gamma, Lognormal, Pareto, Weibull
 
 
 def _validate_positive_data(data, name: str = "data") -> np.ndarray:
@@ -146,6 +146,41 @@ def fit_lognormal_moments(data) -> Lognormal:
     mu_hat = np.log(mean_x) - 0.5 * sigma2_hat
     sigma_hat = np.sqrt(sigma2_hat)
     return Lognormal(mu=float(mu_hat), sigma=float(sigma_hat))
+
+def fit_pareto_moments(data) -> Pareto:
+    """
+    Fit a Pareto Type I severity model by the method of moments.
+
+    For Pareto(alpha, theta):
+        E[X] = alpha * theta / (alpha - 1),   alpha > 1
+        Var(X) = alpha * theta^2 / ((alpha - 1)^2 * (alpha - 2)),   alpha > 2
+
+    Let m = sample mean and s2 = sample variance. Then:
+
+        s2 / m^2 = 1 / (alpha * (alpha - 2))
+
+    which gives:
+
+        alpha_hat = 1 + sqrt(1 + m^2 / s2)
+        theta_hat = m * (alpha_hat - 1) / alpha_hat
+
+    Notes
+    -----
+    This requires positive sample variance.
+    """
+    data = _validate_positive_data(data)
+    mean_x = float(np.mean(data))
+    var_x = float(np.var(data, ddof=0))
+
+    if mean_x <= 0:
+        raise ValueError("Sample mean must be positive.")
+    if var_x <= 0:
+        raise ValueError("Sample variance must be positive.")
+
+    alpha_hat = float(1.0 + np.sqrt(1.0 + (mean_x ** 2) / var_x))
+    theta_hat = float(mean_x * (alpha_hat - 1.0) / alpha_hat)
+
+    return Pareto(alpha=alpha_hat, theta=theta_hat)
 
 
 def fit_weibull_moments(data) -> Weibull:

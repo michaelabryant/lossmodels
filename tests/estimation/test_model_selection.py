@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from lossmodels.estimation import fit_best_severity
-from lossmodels.severity import Lognormal
+from lossmodels.severity import Lognormal, Pareto
 
 
 def test_fit_best_severity_returns_expected_keys():
@@ -33,6 +33,21 @@ def test_fit_best_severity_prefers_lognormal_for_lognormal_data():
 
     assert result["best_name"] == "lognormal"
     assert isinstance(result["best_model"], Lognormal)
+
+
+def test_fit_best_severity_prefers_pareto_for_pareto_data():
+    np.random.seed(123)
+    data = 2.0 * (1.0 + np.random.pareto(a=3.0, size=5000))
+
+    result = fit_best_severity(
+        data,
+        candidates=["exponential", "gamma", "lognormal", "pareto", "weibull"],
+        method="mle",
+        criterion="aic",
+    )
+
+    assert result["best_name"] == "pareto"
+    assert isinstance(result["best_model"], Pareto)
 
 
 def test_fit_best_severity_invalid_inputs():
