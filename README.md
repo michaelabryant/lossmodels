@@ -9,7 +9,7 @@ A Python library for actuarial loss modeling using frequency–severity methods.
 
 ## Overview
 
-`lossmodels` provides a clean, modular implementation of core actuarial techniques from *Loss Models*, including:
+`lossmodels` provides a clean, modular implementation of core actuarial techniques from *Loss Models: Data to Decisions* (Klugman, Panjer, Willmot), including:
 
 - frequency–severity modeling
 - aggregate loss modeling (simulation, Panjer recursion, FFT)
@@ -18,10 +18,9 @@ A Python library for actuarial loss modeling using frequency–severity methods.
 - risk measurement (VaR, TVaR, stop-loss)
 
 Designed for:
-- actuarial analysts
-- actuaries
+- actuaries and actuarial analysts
 - quantitative developers
-- data scientists working with insurance loss data
+- data scientists in insurance
 
 ---
 
