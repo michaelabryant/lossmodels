@@ -55,7 +55,7 @@ pip install -e .
 
 Current package metadata:
 
-- Version: `0.1.1`
+- Version: `0.1.2`
 - Python: `>=3.10`
 - Core dependencies: `numpy`, `scipy`
 
